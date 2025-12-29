@@ -1,0 +1,22 @@
+services:
+  # Servicio 1: El Dashboard Web
+  dashboard:
+    build: .
+    container_name: finance-dashboard
+    restart: always
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    command: streamlit run dashboard.py --server.port=8501 --server.address=0.0.0.0
+
+  # Servicio 2: El Bot de Ingesta (Usa la misma imagen, distinto comando)
+  bot:
+    build: .
+    container_name: finance-bot
+    restart: always
+    depends_on:
+      - dashboard
+    env_file:
+      - .env
+    command: python bot_telegram.py
