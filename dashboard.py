@@ -1,71 +1,44 @@
 import streamlit as st
-import pandas as pd
 import psycopg2
+import pandas as pd
 import os
-import plotly.express as px
 from dotenv import load_dotenv
 
-# Configuración de página
-st.set_page_config(page_title="Crypto Monitor SQL", layout="wide")
+# 1. Configuración de la página
+st.set_page_config(page_title="Crypto Monitor", page_icon="📈")
 load_dotenv()
 
-# --- CONEXIÓN A BASE DE DATOS ---
-def load_data():
-    """Conecta a Postgres y descarga todo el historial"""
-    try:
-        conn = psycopg2.connect(
-            host=os.getenv("DB_HOST"),
-            database=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD")
-        )
-        # Pandas puede leer SQL directamente y convertirlo en DataFrame
-        query = "SELECT * FROM bitcoin_history ORDER BY fecha ASC"
-        df = pd.read_sql(query, conn)
-        conn.close()
-        return df
-    except Exception as e:
-        st.error(f"Error de conexión: {e}")
-        return pd.DataFrame()
+# 2. Título
+st.title("💸 Bitcoin Price Tracker")
+st.write("Datos en tiempo real desde Neon DB (Ingestado por Azure Bot)")
 
-# --- INTERFAZ GRÁFICA ---
-st.title("📡 Monitor de Precios en Tiempo Real")
-st.markdown("Este dashboard lee datos directamente de **PostgreSQL**.")
+# 3. Función para conectar a la DB
+def get_data():
+    conn = psycopg2.connect(os.getenv("DB_URL"))
+    # CORREGIDO: Usamos 'fecha' en lugar de 'timestamp'
+    query = "SELECT * FROM bitcoin_history ORDER BY fecha DESC LIMIT 500"
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
 
-# Botón manual de recarga (Streamlit no se recarga solo por defecto para ahorrar recursos)
-if st.button("🔄 Actualizar Datos"):
-    st.rerun()
+# 4. Mostrar Datos
+try:
+    df = get_data()
 
-# Cargar datos
-df = load_data()
+    # CORREGIDO: Usamos la columna 'precio'
+    latest_price = df.iloc[0]['precio']
+    st.metric(label="Precio Actual (USD)", value=f"${latest_price:,.2f}")
 
-if not df.empty:
-    # --- METRICAS PRINCIPALES (KPIs) ---
-    ultimo_registro = df.iloc[-1]
-    precio_actual = ultimo_registro['precio']
-    hora_actual = ultimo_registro['fecha']
-    
-    # Calculamos variación respecto al registro anterior (si existe)
-    delta = 0
-    if len(df) > 1:
-        anterior = df.iloc[-2]['precio']
-        delta = precio_actual - anterior
+    # Gráfico
+    st.subheader("Tendencia de Precio")
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Precio Actual (BTC)", f"${precio_actual:,.2f}", f"{delta:,.2f}")
-    col2.metric("Última Actualización", f"{hora_actual}")
-    col3.metric("Total Registros en DB", len(df))
+    # CORREGIDO: Usamos 'fecha' como índice y graficamos 'precio'
+    chart_data = df.set_index('fecha')
+    st.line_chart(chart_data['precio'])
 
-    st.markdown("---")
+    # Tabla de datos brutos
+    if st.checkbox("Ver datos crudos"):
+        st.dataframe(df)
 
-    # --- GRÁFICO DE LÍNEA ---
-    st.subheader("Tendencia de Mercado")
-    fig = px.line(df, x='fecha', y='precio', title='Evolución del Precio (BTC/USD)', template="plotly_dark")
-    st.plotly_chart(fig, use_container_width=True)
-
-    # --- TABLA DE DATOS RECIENTES ---
-    with st.expander("Ver últimos 10 registros crudos"):
-        st.dataframe(df.tail(10).sort_values(by="fecha", ascending=False))
-
-else:
-    st.warning("⚠️ La base de datos está vacía. Ejecuta 'logger.py' para generar datos.")
+except Exception as e:
+    st.error(f"Error conectando a la base de datos: {e}")
