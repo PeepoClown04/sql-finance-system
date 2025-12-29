@@ -1,27 +1,45 @@
-# SQL Finance Monitor & Alert System 📉
+# ⚡ Bitcoin Algorithmic Tracker (Cloud Deployed)
 
-Sistema automatizado **ETL (Extract, Transform, Load)** que captura precios de criptomonedas en tiempo real, los almacena en una base de datos relacional y ofrece análisis inteligente mediante un Dashboard y Alertas Móviles.
+Plataforma de ingeniería de datos financiera de grado producción. Ingesta datos de criptomonedas en tiempo real, calcula indicadores de volatilidad y visualiza tendencias mediante una arquitectura distribuida en la nube.
 
-![Python](https://img.shields.io/badge/Python-3.x-blue)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
-![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red)
-![Telegram](https://img.shields.io/badge/Telegram-Bot-blue)
+[![Deployment](https://img.shields.io/badge/Azure-Production-blue?logo=microsoftazure)](https://dev-peepo.me)
+[![Database](https://img.shields.io/badge/Neon-Serverless_Postgres-green?logo=postgresql)](https://neon.tech)
+[![Security](https://img.shields.io/badge/SSL-LetsEncrypt-success?logo=letsencrypt)](https://letsencrypt.org)
+[![Stack](https://img.shields.io/badge/Python-Streamlit-red?logo=python)](https://streamlit.io)
 
-## 🏗 Arquitectura
+### 🔗 Demo en Vivo: [https://dev-peepo.me](https://dev-peepo.me)
 
-1.  **Motor de Ingesta:** Un bot en Python consulta la API de **CoinGecko** cada 60 segundos.
-2.  **Capa de Almacenamiento:** Los datos crudos se persisten en **PostgreSQL**.
-3.  **Capa de Inteligencia:** **Vistas SQL (Views)** calculan automáticamente los KPIs (Promedio, Máximo, Mínimo) para optimizar el rendimiento.
-4.  **Visualización:** Un **Dashboard en Streamlit** lee directamente de las Vistas SQL.
-5.  **Sistema de Notificación:** Alertas automáticas vía **Telegram** cuando se detectan anomalías de precio.
+---
 
-## ⚙️ Requisitos Previos
+## 🏗 Arquitectura de Producción
 
-* Python 3.x
-* PostgreSQL instalado y ejecutándose localmente.
-* Un Token de Bot de Telegram (para las alertas).
+El sistema ha evolucionado de un script local a una infraestructura DevOps completa:
 
-## 🚀 Instalación y Configuración
+1.  **Ingesta Continua (Daemon):** Servicio `systemd` en Linux que consulta la API de **CoinGecko** 24/7.
+2.  **Persistencia en Nube:** Base de datos **PostgreSQL Serverless (Neon DB)** para alta disponibilidad y escalabilidad.
+3.  **Motor Analítico:** Procesamiento con **Pandas** para cálculo de:
+    * Medias Móviles Simples (SMA 50).
+    * Volatilidad en tiempo real (Desviación Estándar).
+    * Variación porcentual dinámica.
+4.  **Seguridad y Redes:**
+    * Despliegue en **Azure Virtual Machine (Ubuntu 24.04)**.
+    * **Nginx** como Proxy Inverso para gestión de puertos.
+    * Certificados SSL/TLS (**HTTPS**) auto-renovables con Certbot.
+5.  **Visualización:** Dashboard interactivo en **Streamlit**.
+
+## 🛠 Tech Stack
+
+* **Infraestructura:** Microsoft Azure (VM B2ats_v2), Nginx, Systemd.
+* **Backend:** Python 3.10, Psycopg2, Dotenv.
+* **Database:** Neon (Serverless PostgreSQL).
+* **Frontend:** Streamlit, Pandas.
+* **DevOps:** Git, SSH, Certbot.
+
+---
+
+## ⚙️ Instalación Local (Para Desarrollo)
+
+Si deseas clonar y correr este proyecto en tu máquina local:
 
 1.  **Clonar el repositorio:**
     ```bash
@@ -29,35 +47,40 @@ Sistema automatizado **ETL (Extract, Transform, Load)** que captura precios de c
     cd sql-finance-system
     ```
 
-2.  **Instalar dependencias:**
+2.  **Entorno Virtual:**
     ```bash
+    python -m venv venv
+    source venv/bin/activate  # En Windows: venv\Scripts\activate
     pip install -r requirements.txt
     ```
 
-3.  **Configuración de Base de Datos:**
-    * Crea una base de datos llamada `finance_db` en PostgreSQL.
-    * Crea un archivo `.env` en la raíz con tus credenciales:
-        ```ini
-        DB_HOST=localhost
-        DB_NAME=finance_db
-        DB_USER=postgres
-        DB_PASS=tu_password
-        TELEGRAM_TOKEN=tu_token_telegram
-        CHAT_ID=tu_chat_id
-        ```
-
-4.  **Inicializar el Sistema:**
-    ```bash
-    # Crea la tabla de precios
-    python init_db.py
-    
-    # Crea la Capa de Inteligencia (Vistas SQL)
-    python create_view.py
+3.  **Configuración de Secretos:**
+    Crea un archivo `.env` en la raíz con la conexión a tu base de datos (Neon o Local):
+    ```ini
+    # Cadena de conexión PostgreSQL
+    DB_URL="postgres://usuario:password@endpoint.neon.tech/finance_db?sslmode=require"
+    TELEGRAM_TOKEN="tu_token"
+    CHAT_ID="tu_id"
     ```
 
-## 🖥️ Uso
+4.  **Ejecutar:**
+    ```bash
+    # Iniciar Dashboard
+    streamlit run dashboard.py
+    ```
 
-### 1. Iniciar el Monitor & Bot
-Este script corre en segundo plano, guardando datos y vigilando alertas.
+---
+
+## 🚀 Despliegue (Comandos de Operación)
+
+El servidor de producción se gestiona mediante servicios `systemd`:
+
 ```bash
-python bot_telegram.py
+# Ver estado del Dashboard
+sudo systemctl status finance-dash
+
+# Ver estado del Bot de Ingesta
+sudo systemctl status finance-bot
+
+# Ver logs en tiempo real
+sudo journalctl -u finance-dash -f
