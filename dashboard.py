@@ -4,41 +4,81 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 
-# 1. Configuración de la página
-st.set_page_config(page_title="Crypto Monitor", page_icon="📈")
+# 1. Configuración y Estilos
+st.set_page_config(page_title="Crypto Monitor Pro", page_icon="📊", layout="wide")
 load_dotenv()
 
-# 2. Título
-st.title("💸 Bitcoin Price Tracker")
-st.write("Datos en tiempo real desde Neon DB (Ingestado por Azure Bot)")
+# Estilos CSS personalizados para "dark mode" agresivo
+st.markdown("""
+<style>
+    .metric-card {
+        background-color: #1e1e1e;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #333;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# 3. Función para conectar a la DB
+# 2. Conexión a Base de Datos
 def get_data():
     conn = psycopg2.connect(os.getenv("DB_URL"))
-    # CORREGIDO: Usamos 'fecha' en lugar de 'timestamp'
-    query = "SELECT * FROM bitcoin_history ORDER BY fecha DESC LIMIT 500"
+    # Traemos más datos para poder calcular tendencias
+    query = "SELECT * FROM bitcoin_history ORDER BY fecha DESC LIMIT 2000"
     df = pd.read_sql(query, conn)
     conn.close()
+    # Asegurar que fecha es datetime y ordenar cronológicamente para cálculos
+    df['fecha'] = pd.to_datetime(df['fecha'])
+    df = df.sort_values('fecha')
     return df
 
-# 4. Mostrar Datos
+# 3. Renderizado
 try:
+    st.title("⚡ Bitcoin Algorithmic Tracker")
+    st.markdown("---")
+    
     df = get_data()
+    
+    if not df.empty:
+        # --- CÁLCULO DE INDICADORES ---
+        current_price = df.iloc[-1]['precio']
+        prev_price = df.iloc[-2]['precio']
+        price_change = current_price - prev_price
+        pct_change = (price_change / prev_price) * 100
+        
+        # Media Móvil Simple (SMA) de 50 periodos (aprox 50 minutos si es por minuto)
+        df['SMA_50'] = df['precio'].rolling(window=50).mean()
+        
+        # Volatilidad (Desviación Estándar de 20 periodos)
+        volatility = df['precio'].rolling(window=20).std().iloc[-1]
 
-    # CORREGIDO: Usamos la columna 'precio'
-    latest_price = df.iloc[0]['precio']
-    st.metric(label="Precio Actual (USD)", value=f"${latest_price:,.2f}")
+        # --- KPIs SUPERIORES ---
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Precio Actual", f"${current_price:,.2f}", f"{pct_change:.2f}%")
+        with col2:
+            st.metric("Volatilidad (20p)", f"${volatility:,.2f}")
+        with col3:
+            max_price = df['precio'].max()
+            st.metric("Máximo Reciente", f"${max_price:,.2f}")
+        with col4:
+            min_price = df['precio'].min()
+            st.metric("Mínimo Reciente", f"${min_price:,.2f}")
 
-    # Gráfico
-    st.subheader("Tendencia de Precio")
+        # --- GRÁFICOS AVANZADOS ---
+        st.markdown("### 📈 Tendencia vs Media Móvil (SMA 50)")
+        
+        # Preparamos datos para el gráfico lineal
+        chart_data = df[['fecha', 'precio', 'SMA_50']].set_index('fecha')
+        
+        # Gráfico de líneas con Streamlit nativo (rápido y limpio)
+        st.line_chart(chart_data, color=["#00FF00", "#0088FF"])
+        
+        st.caption("La línea azul representa el suavizado del precio (SMA). Cruces pueden indicar señales de compra/venta.")
 
-    # CORREGIDO: Usamos 'fecha' como índice y graficamos 'precio'
-    chart_data = df.set_index('fecha')
-    st.line_chart(chart_data['precio'])
-
-    # Tabla de datos brutos
-    if st.checkbox("Ver datos crudos"):
-        st.dataframe(df)
+    else:
+        st.warning("Esperando más datos para calcular indicadores...")
 
 except Exception as e:
-    st.error(f"Error conectando a la base de datos: {e}")
+    st.error(f"Error del sistema: {e}")
