@@ -27,12 +27,7 @@ def get_bitcoin_price():
 def save_to_db(price):
     """Guarda el precio en PostgreSQL"""
     try:
-        conn = psycopg2.connect(
-            host=os.getenv("DB_HOST"),
-            database=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD")
-        )
+        conn = psycopg2.connect(os.getenv("DB_URL"))
         cur = conn.cursor()
         query = "INSERT INTO bitcoin_history (precio, moneda) VALUES (%s, %s)"
         cur.execute(query, (price, 'BTC'))

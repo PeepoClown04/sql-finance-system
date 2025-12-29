@@ -7,12 +7,8 @@ load_dotenv()
 
 try:
     # 2. Establecer conexión (El Puente)
-    conn = psycopg2.connect(
-        host=os.getenv("DB_HOST"),
-        database=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
-    )
+    DATABASE_URL = os.getenv("DB_URL")
+    conn = psycopg2.connect(DATABASE_URL)
     
     # 3. Crear el Cursor (El obrero que ejecuta las órdenes)
     cur = conn.cursor()
