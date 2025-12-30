@@ -28,9 +28,6 @@ def get_data():
     query = "SELECT * FROM bitcoin_history ORDER BY timestamp DESC LIMIT 2000;"
     df = pd.read_sql(query, conn)
     conn.close()
-    # Asegurar que fecha es datetime y ordenar cronológicamente para cálculos
-    df['fecha'] = pd.to_datetime(df['fecha'])
-    df = df.sort_values('fecha')
     return df
 
 # 3. Renderizado
