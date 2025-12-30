@@ -7,7 +7,7 @@ Plataforma de ingeniería de datos financiera de grado producción. Ingesta dato
 [![Security](https://img.shields.io/badge/SSL-LetsEncrypt-success?logo=letsencrypt)](https://letsencrypt.org)
 [![Stack](https://img.shields.io/badge/Python-Streamlit-red?logo=python)](https://streamlit.io)
 
-### 🔗 Demo en Vivo: [[https://dev-peepo.me](https://dev-peepo.me)](https://finance.dev-peepo.me/)
+### 🔗 Demo en Vivo: [[https://dev-peepo.me](https://dev-peepo.me)]
 
 ---
 
