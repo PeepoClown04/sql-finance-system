@@ -21,10 +21,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 2. Conexión a Base de Datos
+@st.cache_data(ttl=60)
 def get_data():
     conn = psycopg2.connect(os.getenv("DB_URL"))
     # Traemos más datos para poder calcular tendencias
-    query = "SELECT * FROM bitcoin_history ORDER BY fecha DESC LIMIT 2000"
+    query = "SELECT * FROM bitcoin_history ORDER BY timestamp DESC LIMIT 2000;"
     df = pd.read_sql(query, conn)
     conn.close()
     # Asegurar que fecha es datetime y ordenar cronológicamente para cálculos
