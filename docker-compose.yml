@@ -11,12 +11,12 @@ services:
     command: streamlit run dashboard.py --server.port=8501 --server.address=0.0.0.0
 
   # Servicio 2: El Bot de Ingesta (Usa la misma imagen, distinto comando)
-  bot:
+bot:
     build: .
-    container_name: finance-bot
+    container_name: finance-etl
     restart: always
     depends_on:
       - dashboard
     env_file:
       - .env
-    command: python bot_telegram.py
+    command: python etl_job.py  
