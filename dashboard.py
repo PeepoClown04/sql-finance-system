@@ -4,6 +4,8 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 
+from etl_job import get_db_connection
+
 # 1. Configuración y Estilos
 st.set_page_config(page_title="Crypto Monitor Pro", page_icon="📊", layout="wide")
 load_dotenv()
@@ -23,8 +25,7 @@ st.markdown("""
 # 2. Conexión a Base de Datos
 @st.cache_data(ttl=60)
 def get_data():
-    conn = psycopg2.connect(os.getenv("DB_URL"))
-    # Traemos más datos para poder calcular tendencias
+    conn = get_db_connection()
     query = "SELECT * FROM bitcoin_history ORDER BY timestamp DESC LIMIT 2000;"
     df = pd.read_sql(query, conn)
     conn.close()
