@@ -14,7 +14,7 @@ services:
   bot:
       build: .
       container_name: finance-etl
-      restart: always
+      restart: no
       depends_on:
         - dashboard
       env_file:
