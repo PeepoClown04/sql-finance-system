@@ -26,7 +26,7 @@ st.markdown("""
 @st.cache_data(ttl=60)
 def get_data():
     conn = get_db_connection()
-    query = "SELECT * FROM bitcoin_history ORDER BY timestamp DESC LIMIT 2000;"
+    query = "SELECT * FROM bitcoin_history ORDER BY fecha DESC LIMIT 2000"
     df = pd.read_sql(query, conn)
     conn.close()
     return df
