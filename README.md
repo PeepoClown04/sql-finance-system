@@ -1,45 +1,60 @@
-# ⚡ Bitcoin Algorithmic Tracker (Cloud Deployed)
+# ⚡ Bitcoin Algorithmic Tracker + AI (MLOps Edition)
 
-Plataforma de ingeniería de datos financiera de grado producción. Ingesta datos de criptomonedas en tiempo real, calcula indicadores de volatilidad y visualiza tendencias mediante una arquitectura distribuida en la nube.
+Plataforma de ingeniería de datos financiera y predicción algorítmica. Ingesta datos de criptomonedas, almacena en Data Warehouse (Cloud), y utiliza un **microservicio de Inteligencia Artificial** para predecir precios futuros en tiempo real.
 
-[![Deployment](https://img.shields.io/badge/Azure-Production-blue?logo=microsoftazure)](https://dev-peepo.me)
+[![Deployment](https://img.shields.io/badge/Azure-Docker_Container-blue?logo=microsoftazure)](https://azure.microsoft.com)
+[![Architecture](https://img.shields.io/badge/Microservices-Docker_Compose-2496ED?logo=docker)](https://www.docker.com/)
+[![AI Model](https://img.shields.io/badge/ML-Scikit_Learn-orange?logo=scikit-learn)](https://scikit-learn.org/)
 [![Database](https://img.shields.io/badge/Neon-Serverless_Postgres-green?logo=postgresql)](https://neon.tech)
-[![Security](https://img.shields.io/badge/SSL-LetsEncrypt-success?logo=letsencrypt)](https://letsencrypt.org)
-[![Stack](https://img.shields.io/badge/Python-Streamlit-red?logo=python)](https://streamlit.io)
+[![Frontend](https://img.shields.io/badge/Streamlit-Dashboard-red?logo=streamlit)](https://streamlit.io)
 
 ### 🔗 Demo en Vivo: [https://finance.dev-peepo.me](https://finance.dev-peepo.me/)
 
 ---
 
-## 🏗 Arquitectura de Producción
+## 🏗 Arquitectura de Microservicios (Docker)
 
-El sistema ha evolucionado de un script local a una infraestructura DevOps completa:
+El sistema opera bajo una arquitectura orquestada por **Docker Compose** con 3 contenedores aislados:
 
-1.  **Ingesta Continua (Daemon):** Servicio `systemd` en Linux que consulta la API de **CoinGecko** 24/7.
-2.  **Persistencia en Nube:** Base de datos **PostgreSQL Serverless (Neon DB)** para alta disponibilidad y escalabilidad.
-3.  **Motor Analítico:** Procesamiento con **Pandas** para cálculo de:
-    * Medias Móviles Simples (SMA 50).
-    * Volatilidad en tiempo real (Desviación Estándar).
-    * Variación porcentual dinámica.
-4.  **Seguridad y Redes:**
-    * Despliegue en **Azure Virtual Machine (Ubuntu 24.04)**.
-    * **Nginx** como Proxy Inverso para gestión de puertos.
-    * Certificados SSL/TLS (**HTTPS**) auto-renovables con Certbot.
-5.  **Visualización:** Dashboard interactivo en **Streamlit**.
+1.  **🧠 ML Brain (API de Inferencia):**
+    * Microservicio expuesto con **FastAPI**.
+    * Ejecuta un modelo **RandomForestRegressor** entrenado para predecir precios ($t+1$) basándose en tendencia, volatilidad y momentum.
+    * Arquitectura "Serverless-ready".
 
-## 🛠 Tech Stack
+2.  **📊 Dashboard (Frontend):**
+    * Interfaz en **Streamlit** conectada a la red interna de Docker.
+    * Consume datos históricos de NeonDB y solicita predicciones en tiempo real a la API de ML.
+    * Cálculo de indicadores técnicos en vivo (SMA 50, Log Returns).
 
-* **Infraestructura:** Microsoft Azure (VM B2ats_v2), Nginx, Systemd.
-* **Backend:** Python 3.10, Psycopg2, Dotenv.
-* **Database:** Neon (Serverless PostgreSQL).
-* **Frontend:** Streamlit, Pandas.
-* **DevOps:** Git, SSH, Certbot.
+3.  **🤖 ETL Bot (Ingesta):**
+    * Worker autónomo en Python.
+    * Programado vía **Cronjob** en el host para ejecución horaria.
+    * Extrae datos de CoinGecko, normaliza y persiste en **Neon PostgreSQL**.
 
 ---
 
-## ⚙️ Instalación Local (Para Desarrollo)
+## 🔮 Capacidades de IA (Neural Forecasting)
 
-Si deseas clonar y correr este proyecto en tu máquina local:
+El sistema incluye un pipeline de Machine Learning completo:
+* **Feature Engineering:** Generación de ventanas móviles (Rolling Windows) para volatilidad y tendencia.
+* **Modelo:** Random Forest Regressor (Scikit-Learn).
+* **Métrica:** Entrenado para minimizar el MAE (Error Absoluto Medio).
+* **Inferencia:** Predicción de precio de cierre para la próxima hora.
+
+---
+
+## 🛠 Tech Stack
+
+* **Infraestructura:** Microsoft Azure VM, Docker, Docker Compose, Nginx.
+* **MLOps:** FastAPI, Uvicorn, Scikit-Learn, Joblib.
+* **Data Engineering:** Python 3.10, Pandas, SQLAlchemy, Neon DB (Postgres).
+* **Visualización:** Streamlit.
+
+---
+
+## ⚙️ Instalación Local (Dockerizada)
+
+Olvídate de configurar entornos virtuales manuales. El proyecto es "Plug & Play" con Docker.
 
 1.  **Clonar el repositorio:**
     ```bash
@@ -47,40 +62,38 @@ Si deseas clonar y correr este proyecto en tu máquina local:
     cd sql-finance-system
     ```
 
-2.  **Entorno Virtual:**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # En Windows: venv\Scripts\activate
-    pip install -r requirements.txt
-    ```
-
-3.  **Configuración de Secretos:**
-    Crea un archivo `.env` en la raíz con la conexión a tu base de datos (Neon o Local):
+2.  **Configurar Variables:**
+    Crea un archivo `.env` en la raíz con tus credenciales:
     ```ini
-    # Cadena de conexión PostgreSQL
-    DB_URL="postgres://usuario:password@endpoint.neon.tech/finance_db?sslmode=require"
-    TELEGRAM_TOKEN="tu_token"
-    CHAT_ID="tu_id"
+    DATABASE_URL="postgresql://usuario:password@endpoint.neon.tech/finance_db?sslmode=require"
+    API_URL="http://ml-brain:8000"  # Comunicación interna de Docker
     ```
 
-4.  **Ejecutar:**
+3.  **Desplegar Arquitectura:**
     ```bash
-    # Iniciar Dashboard
-    streamlit run dashboard.py
+    docker-compose up --build
     ```
+    * Dashboard: `http://localhost:8501`
+    * API ML: `http://localhost:8000/docs`
 
 ---
 
-## 🚀 Despliegue (Comandos de Operación)
+## 🚀 Operación en Producción (Azure)
 
-El servidor de producción se gestiona mediante servicios `systemd`:
+El sistema corre en segundo plano (`detached`) y el bot se gestiona automáticamente.
+
+**Comandos de Gestión:**
 
 ```bash
-# Ver estado del Dashboard
-sudo systemctl status finance-dash
+# 1. Ver estado de los contenedores (Cerebro + Frontend)
+docker ps
 
-# Ver estado del Bot de Ingesta
-sudo systemctl status finance-bot
+# 2. Ver logs de predicción de la IA
+docker logs -f crypto_ml_api
 
-# Ver logs en tiempo real
-sudo journalctl -u finance-dash -f
+# 3. Ejecutar el Bot de Ingesta manualmente (fuera de horario)
+docker start finance-etl
+
+# 4. Actualizar código y reconstruir sin downtime prolongado
+git pull origin main
+docker-compose up --build -d
