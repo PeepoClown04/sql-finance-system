@@ -1,22 +1,46 @@
+version: '3.8'
+
 services:
-  # Servicio 1: El Dashboard Web
+  # Servicio 1: El Dashboard Web (Frontend)
   dashboard:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     container_name: finance-dashboard
     restart: always
     ports:
       - "8501:8501"
     env_file:
       - .env
+    environment:
+      # CRÍTICO: Le dice al dashboard dónde encontrar a la IA dentro de la red Docker
+      - API_URL=http://ml-brain:8000
+    depends_on:
+      - ml-brain
     command: streamlit run dashboard.py --server.port=8501 --server.address=0.0.0.0
 
-  # Servicio 2: El Bot de Ingesta (Usa la misma imagen, distinto comando)
+  # Servicio 2: El Bot de Ingesta (ETL)
   bot:
-      build: .
+      build: 
+        context: .
+        dockerfile: Dockerfile
       container_name: finance-etl
-      restart: no
+      restart: "no" # ETL corre una vez y muere (o usa cron), "no" es correcto si es un script finito
       depends_on:
         - dashboard
       env_file:
         - .env
       command: python etl_job.py
+
+  # Servicio 3: El Cerebro de IA (NUEVO)
+  ml-brain:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml  # Usa el archivo específico que creamos
+    container_name: crypto_ml_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env # Necesita acceso a la DB para cargar datos si re-entrena
